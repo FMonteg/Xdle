@@ -1,3 +1,10 @@
+########## To Do ##############
+#
+# - Allow the cumulant entropy to be computed,
+#   not just the highest possible one
+#   (make an entropy function?)
+# - Stop the game when won (UI?)
+
 ########## Imports ############
 
 import pandas as pd
@@ -11,6 +18,7 @@ class Sqwordle_Game():
     def __init__(self, **kwargs):
         self.states = []
         self.possible = range(151)
+        self.entropy = 0
         pass
 
     def update(self, pokedex):
@@ -93,6 +101,7 @@ class Sqwordle_Game():
 
         temp = pokedex.iloc[self.possible]
         entropy = pd.Series(index = temp['name'].to_list())
+
         for i in self.possible:
             stats_try = pokedex.iloc[i]
 
@@ -104,16 +113,18 @@ class Sqwordle_Game():
                 hint = self.compare(stats_try, stats_real)
                 counts[hint] = counts.get(hint, 0) + 1
             
-            calc = []
+            calcul = []
             total = len(self.possible)
             for hint in counts.keys():
                 p = counts[hint]/total
                 log = math.log(1/p, 2)
-                calc.append(p*log)
-            entropy[i] = sum(calc)
+                calcul.append(p*log)
+            entropy.loc[temp.loc[i,'name']] = sum(calcul) + self.entropy
 
         print("10 entropies les plus élevées :")
         print(entropy.sort_values(ascending=False).head(10))
+
+        self.entropy += entropy.sort_values(ascending=False).iloc[0]
         pass
 
     def compare(self, test, real):
@@ -164,25 +175,11 @@ path = __file__[:-11] + "pokedex.csv"
 pokedex = pd.read_csv(path)
 
 
-if False:
-    game = Sqwordle_Game()
-    test1 = pokedex.iloc[72]
-    hint = tuple(['Tentacruel', 'n','y','n','+','+','-','+'])
-    test2 = pokedex.iloc[33]
-    print(test1)
-    print(hint)
-    print(test2)
-    X = game.compatible(hint,test1,test2)
-    print(X)
 
 
-if True:
-    game = Sqwordle_Game()
-    play = True
-    while play:
-        game.suggest_play(pokedex)
-        game.update(pokedex)
-        print("Keep playing? (y/n)")
-        temp = input()
-        if temp == 'n':
-            play = False
+game = Sqwordle_Game()
+play = True
+
+while play: 
+    game.suggest_play(pokedex)
+    game.update(pokedex)
