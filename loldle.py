@@ -13,10 +13,12 @@ import math
 
 ########## Classes ############
 
+
+
 class Loldle_Game():
-    def __init__(self, database **kwargs):
+    def __init__(self, **kwargs):
         self.states = []
-        self.possible = range(database.shape[0])
+        self.possible = range(kwargs.get("size"))
         self.entropy = 0
         pass
 
@@ -27,22 +29,22 @@ class Loldle_Game():
         name = input()
         state.append(name)
 
-        print('Genre (r/o/g) :')
+        print('Genre (r/o/v) :')
         state.append(input())
 
-        print('Rôle (r/o/g) :')
+        print('Rôle (r/o/v) :')
         state.append(input())
 
-        print('Espèce (r/o/g) :')
+        print('Espèce (r/o/v) :')
         state.append(input())
 
-        print('Ressource (r/o/g) :')
+        print('Ressource (r/o/v) :')
         state.append(input())
 
-        print('Portée (r/o/g) :')
+        print('Portée (r/o/v) :')
         state.append(input())
 
-        print('Régions (r/o/g) :')
+        print('Régions (r/o/v) :')
         state.append(input())
 
         print('Année (+/=/-):')
@@ -55,19 +57,20 @@ class Loldle_Game():
         stats_hint = database.iloc[database[database['Nom'] == name].index[0]]
         for i in self.possible:
             stats_test = database.iloc[i]
-            if self.compatible(state, stats_hint, stats_test):
+            if self.compatible(state[1:], stats_hint, stats_test):
                 remaining.append(i)
         self.possible = remaining
+
         pass
 
     def compatible(self, hint, stats_hint, stats_test):
-        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Portée', 'Régions']
+        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Type de portée', 'Régions']
 
         #Compare each characteristic
         for i in range(len(columns_std)):
             T = set(stats_hint[columns_std[i]])
             R = set(stats_test[columns_std[i]])
-            if hint[i]=='g' and T!=R:
+            if hint[i]=='v' and T!=R:
                 return False
             elif hint[i]=='r' and len(set.intersection(T,R))>0:
                 return False
@@ -90,6 +93,8 @@ class Loldle_Game():
 
         temp = database.iloc[self.possible]
         entropy = pd.Series(index = temp['Nom'].to_list())
+
+        print(self.possible)
 
         for i in self.possible:
             stats_try = database.iloc[i]
@@ -119,14 +124,14 @@ class Loldle_Game():
     def compare(self, test, real):
         hint = []
 
-        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Portée', 'Régions']
+        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Type de portée', 'Régions']
 
         #Compare each characteristic
         for col in columns_std:
             T = set(test[col])
             R = set(real[col])
             if T==R:
-                hint.append('g')
+                hint.append('v')
             elif len(set.intersection(T,R))>0:
                 hint.append('o')
             else:
@@ -148,14 +153,46 @@ class Loldle_Game():
 
 ########## Main code ############
 
-#Database : Champion, genre, rôle, espèce, ressource, portée, régions, année
 
 #On récupère notre base de données
-path = __file__[:-9] + "data_lol.csv"
+path = __file__[:-9] + "database_lol.csv"
 database = pd.read_csv(path)
 
+for col in database.columns[1:-1]:
+    database[col] = database[col].map(lambda x: x.split(', '))
 
-game = Loldle_Game(database)
+
+def compatible_test(hint, stats_hint, stats_test):
+        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Type de portée', 'Régions']
+
+        #Compare each characteristic
+        for i in range(len(columns_std)):
+            T = set(stats_hint[columns_std[i]])
+            R = set(stats_test[columns_std[i]])
+            if hint[i]=='v' and T!=R:
+                return (False, columns_std[i])
+            elif hint[i]=='r' and len(set.intersection(T,R))>0:
+                return (False, columns_std[i])
+            elif hint[i]=='o' and (T==R or len(set.intersection(T,R))==0):
+                return (False, columns_std[i])
+        
+        #Compare year
+        if hint[-1]=="=" and stats_hint['Année']!=stats_test['Année']:
+            return (False, 'Année')
+        elif hint[-1]=="+" and stats_hint['Année']>stats_test['Année']:
+            return (False, 'Année')
+        elif hint[-1]=="-" and stats_hint['Année']<stats_test['Année']:
+            return (False, 'Année')
+        
+        return True
+
+#stats_hint = database.iloc[database[database['Nom'] == 'Vayne'].index[0]]
+#stats_test = database.iloc[database[database['Nom'] == 'Nunu et Willump'].index[0]]
+#hint = ['r', 'r', 'o', 'v', 'r', 'r', '-']
+#print(compatible_test(hint, stats_hint, stats_test))
+
+
+game = Loldle_Game(size=database.shape[0])
 play = True
 
 while play: 
