@@ -153,20 +153,53 @@ class Loldle_Game():
 
 ########## Main code ############
 
+pd.set_option('display.max_rows', None)
 
 #On récupère notre base de données
-path = __file__[:-9] + "database_lol.csv"
+path = __file__[:-17] + "database_lol.csv"
 database = pd.read_csv(path)
 
-for col in database.columns[1:-1]:
-    database[col] = database[col].map(lambda x: x.split(', '))
+print(database.shape)
+database = database[database['Genre'] != 'Féminin']
+print(database.shape)
+database = database[database['Type de portée'] == 'Mêlée']
+print(database.shape)
+database = database[database['Ressource'] != 'Mana']
+print(database.shape)
+database = database[database['Année'] > 2011]
+print(database.shape)
+
+print(database.head(200))
 
 
+def compatible_test(hint, stats_hint, stats_test):
+        columns_std = ['Genre', 'Rôle', 'Espèce', 'Ressource', 'Type de portée', 'Régions']
 
+        #Compare each characteristic
+        for i in range(len(columns_std)):
+            T = set(stats_hint[columns_std[i]])
+            R = set(stats_test[columns_std[i]])
+            if hint[i]=='v' and T!=R:
+                return (False, columns_std[i])
+            elif hint[i]=='r' and len(set.intersection(T,R))>0:
+                return (False, columns_std[i])
+            elif hint[i]=='o' and (T==R or len(set.intersection(T,R))==0):
+                return (False, columns_std[i])
+        
+        #Compare year
+        if hint[-1]=="=" and stats_hint['Année']!=stats_test['Année']:
+            return (False, 'Année')
+        elif hint[-1]=="+" and stats_hint['Année']>stats_test['Année']:
+            return (False, 'Année')
+        elif hint[-1]=="-" and stats_hint['Année']<stats_test['Année']:
+            return (False, 'Année')
+        
+        return (True, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
-game = Loldle_Game(size=database.shape[0])
-play = True
+stats_hint = database.iloc[database[database['Nom'] == 'Vayne'].index[0]]
 
-while play: 
-    game.suggest_play(database)
-    game.update(database)
+hint = ['r', 'o', 'o', 'r', 'r', 'r', '+']
+for name in database['Nom']:
+    print(name)
+    stats_test = database.iloc[database[database['Nom'] == name].index[0]]
+    print(compatible_test(hint, stats_hint, stats_test))
