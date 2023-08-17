@@ -81,9 +81,9 @@ class Loldle_Game():
         #Compare year
         if hint[-1]=="=" and stats_hint['Année']!=stats_test['Année']:
             return False
-        elif hint[-1]=="+" and stats_hint['Année']>stats_test['Année']:
+        elif hint[-1]=="+" and stats_hint['Année']>=stats_test['Année']:
             return False
-        elif hint[-1]=="-" and stats_hint['Année']<stats_test['Année']:
+        elif hint[-1]=="-" and stats_hint['Année']<=stats_test['Année']:
             return False
         
         return True
