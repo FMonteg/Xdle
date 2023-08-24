@@ -77,7 +77,7 @@ class Sqwordle_Game():
             return False 
         elif hint[1] == 'n' and (stats_hint['type1']==stats_test['type1'] or stats_hint['type1']==stats_test['type2']):
             return False
-        if hint[2] == 'y' and (stats_hint['type2']!=stats_test['type1'] and stats_hint['type1']!=stats_test['type2']): 
+        if hint[2] == 'y' and (stats_hint['type2']!=stats_test['type1'] and stats_hint['type2']!=stats_test['type2']): 
             return False
         elif hint[2] == 'n' and (stats_hint['type2']==stats_test['type1'] or stats_hint['type1']==stats_test['type2']):
             return False
@@ -140,7 +140,7 @@ class Sqwordle_Game():
         #Compare type 2
         if pd.isna(test['type2']):
             hint.append('')
-        elif test['type2']==real['type1'] or test['type1']==real['type2']:
+        elif test['type2']==real['type1'] or test['type2']==real['type2']:
             hint.append('y')
         else:
             hint.append('n')
